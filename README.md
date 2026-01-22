@@ -3,14 +3,16 @@
 ## 🚀 Quick Start (Docker)
 
 ### Prerequisites
+
 - Docker & Docker Compose installed
 - Expo Go app on your phone
 
 ### First Time Setup
+
 ```bash
 # Clone the repo
 git clone <your-repo-url>
-cd my-app
+cd coliGo
 
 # Start the app
 docker-compose up --build
@@ -30,6 +32,7 @@ Scan the **QR code** with Expo Go app.
 ```
 
 Or manually:
+
 ```bash
 git pull origin main
 docker-compose down
@@ -50,14 +53,14 @@ Then tell your colleague to run `./sync.sh`
 
 ## 📋 Common Commands
 
-| Action | Command |
-|--------|---------|
-| Start app | `docker-compose up` |
-| Start (rebuild) | `docker-compose up --build` |
-| Stop app | `docker-compose down` |
-| View logs | `docker-compose logs -f expo` |
-| Sync updates | `./sync.sh` |
-| Enter container | `docker exec -it my-app-expo sh` |
+| Action              | Command                                             |
+| ------------------- | --------------------------------------------------- |
+| Start app           | `docker-compose up`                                 |
+| Start (rebuild)     | `docker-compose up --build`                         |
+| Stop app            | `docker-compose down`                               |
+| View logs           | `docker-compose logs -f expo`                       |
+| Sync updates        | `./sync.sh`                                         |
+| Enter container     | `docker exec -it my-app-expo sh`                    |
 | Install new package | `docker exec -it my-app-expo npm install <package>` |
 
 ---
@@ -66,7 +69,7 @@ Then tell your colleague to run `./sync.sh`
 
 ```bash
 # From your machine (while container is running)
-docker exec -it my-app-expo npm install <package-name>
+docker exec -it ColiGo-expo npm install <package-name>
 
 # Then commit the updated package.json
 git add package.json package-lock.json
@@ -106,21 +109,25 @@ src/
 ## ⚠️ Troubleshooting
 
 ### QR Code not working?
+
 Make sure you're using `--tunnel` mode (default in docker-compose)
 
 ### Port already in use?
+
 ```bash
 docker-compose down
 docker-compose up
 ```
 
 ### Package version mismatch?
+
 ```bash
 docker-compose down
 docker-compose up --build  # Rebuilds with fresh node_modules
 ```
 
 ### Need to clear cache?
+
 ```bash
-docker exec -it my-app-expo npx expo start --clear
+docker exec -it ColiGo-expo npx expo start --clear
 ```

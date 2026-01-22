@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: my-app-expo
+    container_name: coliGo-expo
     ports:
       - "8081:8081"
       - "19000:19000"
