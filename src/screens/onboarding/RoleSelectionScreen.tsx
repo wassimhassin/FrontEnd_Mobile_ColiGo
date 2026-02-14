@@ -133,6 +133,7 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
   onBack,
 }) => {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  console.log("selectedRole", selectedRole);
 
   const roles = [
     {
@@ -141,14 +142,14 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
       description: "Je veux envoyer des colis",
       icon: "person-outline" as keyof typeof Ionicons.glyphMap,
       features: [
-        "Rechercher des transporteurs",
+        "Rechercher des LIVREUR",
         "Réserver et suivre vos colis",
         "Paiement sécurisé",
-        "Notation des transporteurs",
+        "Notation des LIVREUR",
       ],
     },
     {
-      role: USER_ROLES.TRANSPORTER,
+      role: USER_ROLES.LIVREUR,
       title: "Transporteur",
       description: "Je veux transporter des colis",
       icon: "airplane-outline" as keyof typeof Ionicons.glyphMap,

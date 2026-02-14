@@ -1,5 +1,5 @@
 import "./global.css";
-import React from "react";
+import React, { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useAppStore, useAuthStore } from "./src/store";
@@ -25,11 +25,20 @@ export default function App() {
     setSelectedRole,
   } = useAppStore();
 
-  const { user, isAuthenticated, login, logout } = useAuthStore();
+  const { user, isAuthenticated, logout, checkAuth } = useAuthStore();
+
+  // Check auth on app start
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
   // Screen navigation handlers
   const handleSplashFinish = () => {
-    setScreen("onboarding");
+    if (isAuthenticated) {
+      setScreen("home");
+    } else {
+      setScreen("onboarding");
+    }
   };
 
   const handleOnboardingComplete = () => {
@@ -45,39 +54,18 @@ export default function App() {
     setScreen("onboarding");
   };
 
-  const handleRoleSelect = (role: typeof USER_ROLES[keyof typeof USER_ROLES]) => {
+  const handleRoleSelect = (
+    role: (typeof USER_ROLES)[keyof typeof USER_ROLES],
+  ) => {
     setSelectedRole(role);
     setScreen("login");
   };
 
-  const handleLogin = (email: string, password: string) => {
-    // Simulate login - replace with actual API call
-    const mockUser = {
-      id: "1",
-      email,
-      firstName: "Jean",
-      lastName: "Dupont",
-      role: selectedRole || USER_ROLES.CLIENT,
-      kycVerified: false,
-      createdAt: new Date().toISOString(),
-    };
-    login(mockUser, "mock-token");
+  const handleLoginSuccess = () => {
     setScreen("home");
   };
 
-  const handleRegister = (data: any) => {
-    // Simulate registration - replace with actual API call
-    const mockUser = {
-      id: "1",
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phone: data.phone,
-      role: selectedRole || USER_ROLES.CLIENT,
-      kycVerified: false,
-      createdAt: new Date().toISOString(),
-    };
-    login(mockUser, "mock-token");
+  const handleRegisterSuccess = () => {
     setScreen("home");
   };
 
@@ -85,8 +73,8 @@ export default function App() {
     console.log("Reset password for:", email);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     setScreen("login");
   };
 
@@ -118,20 +106,19 @@ export default function App() {
       case "login":
         return (
           <LoginScreen
-            onLogin={handleLogin}
             onForgotPassword={() => setScreen("forgot_password")}
             onRegister={() => setScreen("register")}
             onBack={() => setScreen("role_selection")}
+            onSuccess={handleLoginSuccess}
           />
         );
 
       case "register":
         return (
           <RegisterScreen
-            selectedRole={selectedRole || USER_ROLES.CLIENT}
-            onRegister={handleRegister}
             onLogin={() => setScreen("login")}
             onBack={() => setScreen("login")}
+            onSuccess={handleRegisterSuccess}
           />
         );
 
@@ -159,9 +146,7 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        {renderScreen()}
-      </SafeAreaProvider>
+      <SafeAreaProvider>{renderScreen()}</SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

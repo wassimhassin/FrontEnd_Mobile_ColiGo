@@ -1,4 +1,4 @@
-import { UserRole } from '../constants/app';
+import { UserRole } from "../constants/app";
 
 export interface User {
   id: string;
@@ -20,7 +20,7 @@ export interface AuthState {
 }
 
 export interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
 }
 
@@ -34,7 +34,7 @@ export interface RegisterData {
 }
 
 export interface KYCData {
-  documentType: 'passport' | 'id_card';
+  documentType: "passport" | "id_card";
   documentNumber: string;
   documentFront: string;
   documentBack?: string;
@@ -52,7 +52,7 @@ export interface Trip {
   pricePerKg: number;
   acceptsFragile: boolean;
   acceptsFood: boolean;
-  status: 'active' | 'full' | 'completed' | 'cancelled';
+  status: "active" | "full" | "completed" | "cancelled";
 }
 
 export interface Location {
@@ -73,16 +73,21 @@ export interface Parcel {
   createdAt: string;
 }
 
-export type ParcelCategory = 'standard' | 'fragile' | 'food' | 'documents' | 'electronics';
+export type ParcelCategory =
+  | "standard"
+  | "fragile"
+  | "food"
+  | "documents"
+  | "electronics";
 
-export type ParcelStatus = 
-  | 'pending'
-  | 'accepted'
-  | 'paid'
-  | 'collected'
-  | 'in_transit'
-  | 'delivered'
-  | 'cancelled';
+export type ParcelStatus =
+  | "pending"
+  | "accepted"
+  | "paid"
+  | "collected"
+  | "in_transit"
+  | "delivered"
+  | "cancelled";
 
 export interface ApiResponse<T> {
   success: boolean;

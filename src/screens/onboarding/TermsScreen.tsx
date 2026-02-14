@@ -1,24 +1,24 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   Dimensions,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { Ionicons } from "@expo/vector-icons";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
   interpolate,
-} from 'react-native-reanimated';
-import { Button } from '../../components/ui';
+} from "react-native-reanimated";
+import { Button } from "../../components/ui";
 
-const { height } = Dimensions.get('window');
+const { height } = Dimensions.get("window");
 
 interface TermsScreenProps {
   onAccept: () => void;
@@ -62,7 +62,7 @@ const CheckBox = ({
         style={animatedStyle}
         className={`
           w-6 h-6 rounded-lg border-2 items-center justify-center mr-3 mt-0.5
-          ${checked ? 'bg-primary-600 border-primary-600' : 'border-gray-300 bg-white'}
+          ${checked ? "bg-primary-600 border-primary-600" : "border-gray-300 bg-white"}
         `}
       >
         <Animated.View style={checkAnimatedStyle}>
@@ -80,14 +80,14 @@ Bienvenue sur ColiGo !
 En utilisant notre plateforme, vous acceptez les conditions suivantes :
 
 1. OBJET DU SERVICE
-ColiGo est une plateforme de mise en relation entre clients souhaitant envoyer des colis et transporteurs effectuant des voyages internationaux.
+ColiGo est une plateforme de mise en relation entre clients souhaitant envoyer des colis et LIVREUR effectuant des voyages internationaux.
 
 2. INSCRIPTION ET VÉRIFICATION
 • Tous les utilisateurs doivent fournir des informations exactes
 • Une vérification d'identité (KYC) est obligatoire
 • Les documents requis : passeport ou carte d'identité valide
 
-3. RESPONSABILITÉS DES TRANSPORTEURS
+3. RESPONSABILITÉS DES LIVREUR
 • Déclarer les voyages avec précision
 • Respecter les délais de livraison annoncés
 • Prendre soin des colis transportés
@@ -138,7 +138,8 @@ export const TermsScreen: React.FC<TermsScreenProps> = ({
       setHasScrolledToEnd(true);
     }
 
-    const progress = contentOffset.y / (contentSize.height - layoutMeasurement.height);
+    const progress =
+      contentOffset.y / (contentSize.height - layoutMeasurement.height);
     progressAnim.value = Math.min(1, Math.max(0, progress));
   };
 
@@ -221,18 +222,10 @@ export const TermsScreen: React.FC<TermsScreenProps> = ({
 
         <View className="flex-row space-x-3">
           <View className="flex-1 mr-2">
-            <Button
-              title="Refuser"
-              onPress={onDecline}
-              variant="outline"
-            />
+            <Button title="Refuser" onPress={onDecline} variant="outline" />
           </View>
           <View className="flex-1 ml-2">
-            <Button
-              title="Accepter"
-              onPress={onAccept}
-              disabled={!canAccept}
-            />
+            <Button title="Accepter" onPress={onAccept} disabled={!canAccept} />
           </View>
         </View>
       </View>

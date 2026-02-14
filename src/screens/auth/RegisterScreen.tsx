@@ -6,45 +6,43 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, {
-  FadeInDown,
-  FadeInUp,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { Button, Input } from "../../components/ui";
-import { VALIDATION, USER_ROLES, UserRole } from "../../constants";
+import { useAppStore, useAuthStore } from "../../store";
+import { UserRole, USER_ROLES, VALIDATION } from "../../constants";
+import { VerificationCodeScreen } from "./VerificationCodeScreen";
 
 interface RegisterScreenProps {
-  selectedRole: UserRole;
-  onRegister: (data: RegisterFormData) => void;
   onLogin: () => void;
   onBack: () => void;
-  isLoading?: boolean;
+  onSuccess: () => void;
 }
 
-interface RegisterFormData {
+interface FormData {
   firstName: string;
   lastName: string;
-  email: string;
   phone: string;
+  address: string;
+  email: string;
   password: string;
   confirmPassword: string;
-  role: UserRole;
+  roleName: string;
 }
 
 interface FormErrors {
   firstName?: string;
   lastName?: string;
-  email?: string;
   phone?: string;
+  address?: string;
+  email?: string;
   password?: string;
   confirmPassword?: string;
+  roleName?: string;
 }
 
 const StepIndicator = ({
@@ -58,7 +56,6 @@ const StepIndicator = ({
     <View className="flex-row items-center justify-center mb-6">
       {Array.from({ length: totalSteps }).map((_, index) => {
         const isActive = index + 1 <= currentStep;
-        const isCurrent = index + 1 === currentStep;
 
         return (
           <React.Fragment key={index}>
@@ -92,27 +89,44 @@ const StepIndicator = ({
 };
 
 export const RegisterScreen: React.FC<RegisterScreenProps> = ({
-  selectedRole,
-  onRegister,
   onLogin,
   onBack,
-  isLoading = false,
+  onSuccess,
 }) => {
+  const { selectedRole } = useAppStore();
+  const { register, isLoading, error, clearError } = useAuthStore();
+
+  // Fonction utilitaire pour mapper le rôle interne vers le rôle API (si différent)
+  const getApiRoleName = (appRole: UserRole | null): string => {
+    if (appRole === USER_ROLES.CLIENT) return "CLIENT";
+    return "LIVREUR";
+  };
+
+  console.log(
+    "selectedRole",
+    getApiRoleName(selectedRole),
+    "----------------------",
+  );
+
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState<RegisterFormData>({
+  const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
-    email: "",
     phone: "",
+    address: "",
+    email: "",
     password: "",
     confirmPassword: "",
-    role: selectedRole,
+    roleName: "",
   });
+  console.log("form data", formData);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [showVerification, setShowVerification] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
-  const updateForm = (key: keyof RegisterFormData, value: string) => {
+  const updateForm = (key: keyof FormData, value: string) => {
     setFormData({ ...formData, [key]: value });
-    if (errors[key as keyof FormErrors]) {
+    if (errors[key]) {
       setErrors({ ...errors, [key]: undefined });
     }
   };
@@ -130,11 +144,10 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
 
     if (!formData.phone.trim()) {
       newErrors.phone = "Le téléphone est requis";
-    } else if (
-      !VALIDATION.PHONE_REGEX.test(formData.phone.replace(/\s/g, ""))
-    ) {
-      newErrors.phone = "Numéro de téléphone invalide";
     }
+    // if (!formData.address.trim()) {
+    //   newErrors.address = "L'adresse est requise";
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -165,11 +178,30 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    clearError();
+
     if (step === 1 && validateStep1()) {
       setStep(2);
     } else if (step === 2 && validateStep2()) {
-      onRegister(formData);
+      // Données envoyées au backend
+      const registrationData = {
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        phone: formData.phone.replace(/\s/g, ""),
+        address: formData.address,
+        roleName: formData.roleName || getApiRoleName(selectedRole),
+      };
+
+      const success = await register(registrationData);
+      console.log("success", registrationData, "----------------------");
+      if (success) {
+        // Navigate to verification screen
+        setRegisteredEmail(formData.email.trim().toLowerCase());
+        setShowVerification(true);
+      }
     }
   };
 
@@ -181,11 +213,56 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
     }
   };
 
-  const roleInfo =
-    selectedRole === USER_ROLES.CLIENT
-      ? { title: "Client", icon: "client-outline", color: "#3b82f6" }
-      : { title: "Transporteur", icon: "airplane-outline", color: "#22c55e" };
+  const handleVerificationSuccess = () => {
+    // After successful verification, redirect to home
+    onSuccess();
+  };
 
+  const handleVerificationBack = () => {
+    // Allow user to go back to registration form
+    setShowVerification(false);
+  };
+
+  // Show error alert if there's an API error
+  React.useEffect(() => {
+    if (error) {
+      Alert.alert("Erreur", error, [{ text: "OK", onPress: clearError }]);
+    }
+  }, [error]);
+
+  // Update role if selectedRole changes in store (unlikely but safe)
+  React.useEffect(() => {
+    if (selectedRole) {
+      setFormData((prev) => ({
+        ...prev,
+        roleName: getApiRoleName(selectedRole),
+      }));
+    }
+  }, [selectedRole]);
+
+  // If verification screen should be shown
+  if (showVerification) {
+    return (
+      <VerificationCodeScreen
+        email={registeredEmail}
+        onSuccess={handleVerificationSuccess}
+        onBack={handleVerificationBack}
+      />
+    );
+  }
+
+  // Display label for role
+  const getRoleLabel = () => {
+    if (selectedRole === USER_ROLES.CLIENT) return "CLIENT";
+    return "LIVREUR";
+  };
+
+  const getRoleIcon = () => {
+    if (selectedRole === USER_ROLES.CLIENT) return "airplane-outline";
+    return "person-outline";
+  };
+
+  // Otherwise show the registration form
   return (
     <SafeAreaView className="flex-1 bg-white">
       <StatusBar style="dark" />
@@ -210,21 +287,17 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                 <Ionicons name="arrow-back" size={20} color="#374151" />
               </TouchableOpacity>
 
-              {/* Role Badge */}
+              {/* Badge Rôle Dynamique */}
               <View
-                style={{ backgroundColor: `${roleInfo.color}15` }}
+                style={{ backgroundColor: "#3b82f615" }}
                 className="flex-row items-center px-3 py-1.5 rounded-full"
               >
-                <Ionicons
-                  name={roleInfo.icon as any}
-                  size={16}
-                  color={roleInfo.color}
-                />
+                <Ionicons name={getRoleIcon()} size={16} color="#3b82f6" />
                 <Text
-                  style={{ color: roleInfo.color }}
+                  style={{ color: "#3b82f6" }}
                   className="font-medium ml-1.5 text-sm"
                 >
-                  {roleInfo.title}
+                  {getRoleLabel()}
                 </Text>
               </View>
             </View>
@@ -283,6 +356,17 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                   leftIcon="call-outline"
                   keyboardType="phone-pad"
                 />
+                <Input
+                  label="Adresse"
+                  placeholder="votre adresse"
+                  value={formData.address}
+                  onChangeText={(text) => updateForm("address", text)}
+                  error={errors.address}
+                  leftIcon="location-outline"
+                  keyboardType="default"
+                  autoCapitalize="words"
+                  autoComplete="address-line1"
+                />
 
                 {/* Info Card */}
                 <View className="bg-blue-50 rounded-xl p-4 mt-4 flex-row">
@@ -293,11 +377,11 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                   />
                   <View className="flex-1 ml-3">
                     <Text className="text-blue-800 font-medium mb-1">
-                      Vérification requise
+                      Vérification email requise
                     </Text>
                     <Text className="text-blue-600 text-sm">
-                      Vous devrez vérifier votre identité (KYC) après
-                      l'inscription pour utiliser la plateforme.
+                      Après l'inscription, vous recevrez un code de vérification
+                      par email pour activer votre compte.
                     </Text>
                   </View>
                 </View>
@@ -315,7 +399,6 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                   autoCapitalize="none"
                   autoComplete="email"
                 />
-
                 <Input
                   label="Mot de passe"
                   placeholder="••••••••"
